@@ -574,15 +574,12 @@ export function calculateSMSSSV(
     const child = attacker.clone();
     child.ability = 'Parental Bond (Child)' as AbilityName;
     checkMultihitBoost(gen, child, defender, move, field, desc);
-    childDamage = calculateSMSSSV(gen, child, defender, move, field).damage as number[];
+    childDamage = calculateSMSSSV(gen, child, defender, move, field).damage as number;
     desc.attackerAbility = attacker.ability;
   }
 
-  let damage = [];
-  for (let i = 0; i < 16; i++) {
-    damage[i] =
-      getFinalDamage(baseDamage, i, typeEffectiveness, applyBurn, stabMod, finalMod, protect);
-  }
+  let damage =
+      getFinalDamage(baseDamage, 7, typeEffectiveness, applyBurn, stabMod, finalMod, protect);
 
   if (move.dropsStats && move.timesUsed! > 1) {
     const simpleMultiplier = attacker.hasAbility('Simple') ? 2 : 1;
@@ -593,24 +590,20 @@ export function calculateSMSSSV(
     let dropCount = 0;
     for (let times = 0; times < move.timesUsed!; times++) {
       const newAttack = getModifiedStat(attack, dropCount);
-      let damageMultiplier = 0;
-      damage = damage.map(affectedAmount => {
-        if (times) {
-          const newBaseDamage = getBaseDamage(attacker.level, basePower, newAttack, defense);
-          const newFinalDamage = getFinalDamage(
-            newBaseDamage,
-            damageMultiplier,
-            typeEffectiveness,
-            applyBurn,
-            stabMod,
-            finalMod,
-            protect
-          );
-          damageMultiplier++;
-          return affectedAmount + newFinalDamage;
-        }
-        return affectedAmount;
-      });
+      let damageMultiplier = 7;
+      if (times) {
+        const newBaseDamage = getBaseDamage(attacker.level, basePower, newAttack, defense);
+        const newFinalDamage = getFinalDamage(
+          newBaseDamage,
+          damageMultiplier,
+          typeEffectiveness,
+          applyBurn,
+          stabMod,
+          finalMod,
+          protect
+        );
+        damage += newFinalDamage;
+      }
 
       if (attacker.hasAbility('Contrary')) {
         dropCount = Math.min(6, dropCount + move.dropsStats);
@@ -635,8 +628,7 @@ export function calculateSMSSSV(
     let defenderDefBoost = 0;
     for (let times = 0; times < move.hits; times++) {
       const newDefense = getModifiedStat(defense, defenderDefBoost);
-      let damageMultiplier = 0;
-      damage = damage.map(affectedAmount => {
+      let damageMultiplier = 7;
         if (times) {
           const newFinalMods = calculateFinalModsSMSSSV(
             gen,
@@ -671,11 +663,8 @@ export function calculateSMSSSV(
             newFinalMod,
             protect
           );
-          damageMultiplier++;
-          return affectedAmount + newFinalDamage;
+          damage += newFinalDamage;
         }
-        return affectedAmount;
-      });
       if (hitsPhysical && defender.ability === 'Stamina') {
         defenderDefBoost = Math.min(6, defenderDefBoost + 1);
         desc.defenderAbility = 'Stamina';
